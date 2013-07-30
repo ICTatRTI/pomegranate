@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+    <title>Pomegranate</title>
+    <style>
+      body { font-size: 200%; }
+    </style>
+  </head>
+  <body>
+    <h1>Pomegranate</h1>
+    <p>This proof of concept displays the context of an SMS inbox and lets you send a text.</p>
+    <div id='sender'>
+      <input id='phone_number' placeholder='phone number'><br>
+      <textarea id='message' rows='5' placeholder='message'></textarea><br>
+      <input type='button' id='send' value='send'>
+    </div>
+    <div id='messages'></div>
+
+    <script type="text/javascript" src="js/lib/cordova.js"></script>
+    <script type="text/javascript" src="js/lib/jquery.js"></script>
+
+    <script type="text/javascript">
+
+
+
+      $(function(){ // document ready
+        $(document).on('deviceready', function() { // phonegap deviceready
+
+
+          /*
+           * respond to sender
+           */
+          $("#send").click(function(){
+
+            var
+              number  = $("#phone_number").val(),
+              message = $("#message").val(),
+              success = function () { alert('Message sent successfully'); },
+              error = function (e) { alert('Message Failed:' + e); }
+            ;
+
+            cordova.exec(success, error, // execute the plugin
+              'SmsPlugin', // class
+              "SendSMS", // method
+              [number, message]); 
+
+          });
+
+
+
+
+          /*
+           * Display messages
+           */
+        
+          var
+            success = function(results)
+            {
+              var hTable = "\
+                <table>\
+                  <th>from</th><th>message</th><th>date</th>\
+              ";
+
+              results.texts.forEach( function(text){
+
+                hTable += "<tr>";
+                hTable += "<td>"+text.from+"</td>";
+                hTable += "<td>"+text.message+"</td>";
+                hTable += "<td>"+text.time_received+"</td>";
+                hTable += "</tr>";
+
+              });
+              hTable += "</table>";
+              $("#messages").html(hTable);
+            },
+            error = function( error )
+            {
+              console.log("THERE WAS AN ERROR!!! aaaaaAAAAHHHHH!!!");
+              console.log(error);
+            }
+
+
+          // execute the plugin
+          cordova.exec( success, error
+          , "ReadSms" // class
+          , "GetTexts" // method
+          , ['',-1] // No number specified, -1 is unlimited
+          );
+
+        }); // end of deviceready
+
+      }); // end of document.ready
+
+
+
+    </script>
+  </body>
+</html>
