@@ -21,81 +21,9 @@
 
     <script type="text/javascript" src="js/lib/cordova.js"></script>
     <script type="text/javascript" src="js/lib/jquery.js"></script>
+    <script type="text/javascript" src="js/lib/underscore-min.js"></script>
+    <script type="text/javascript" src="js/lib/pouchdb.min.js"></script>
+    <script type="text/javascript" src="js/pomegranate.js"></script>
 
-    <script type="text/javascript">
-
-
-
-      $(function(){ // document ready
-        $(document).on('deviceready', function() { // phonegap deviceready
-
-
-          /*
-           * respond to sender
-           */
-          $("#send").click(function(){
-
-            var
-              number  = $("#phone_number").val(),
-              message = $("#message").val(),
-              success = function () { alert('Message sent successfully'); },
-              error = function (e) { alert('Message Failed:' + e); }
-            ;
-
-            cordova.exec(success, error, // execute the plugin
-              'SmsPlugin', // class
-              "SendSMS", // method
-              [number, message]); 
-
-          });
-
-
-
-
-          /*
-           * Display messages
-           */
-        
-          var
-            success = function(results)
-            {
-              var hTable = "\
-                <table>\
-                  <th>from</th><th>message</th><th>date</th>\
-              ";
-
-              results.texts.forEach( function(text){
-
-                hTable += "<tr>";
-                hTable += "<td>"+text.from+"</td>";
-                hTable += "<td>"+text.message+"</td>";
-                hTable += "<td>"+text.time_received+"</td>";
-                hTable += "</tr>";
-
-              });
-              hTable += "</table>";
-              $("#messages").html(hTable);
-            },
-            error = function( error )
-            {
-              console.log("THERE WAS AN ERROR!!! aaaaaAAAAHHHHH!!!");
-              console.log(error);
-            }
-
-
-          // execute the plugin
-          cordova.exec( success, error
-          , "ReadSms" // class
-          , "GetTexts" // method
-          , ['',-1] // No number specified, -1 is unlimited
-          );
-
-        }); // end of deviceready
-
-      }); // end of document.ready
-
-
-
-    </script>
   </body>
 </html>
