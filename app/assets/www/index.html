@@ -10,19 +10,25 @@
     </style>
   </head>
   <body>
-    <h1>Pomegranate</h1>
-    <p>This proof of concept displays the context of an SMS inbox and lets you send a text.</p>
+    <h1><img style='float:left' src='icon.png'>omegranate</h1>
+    <button style='position:absolute; top:1px; right:1px;font-size:200%' onClick='document.location.reload()'>Refresh</button>
     <div id='sender'>
       <input id='to' placeholder='phone number'><br>
       <textarea id='message' rows='5' placeholder='message'></textarea><br>
       <input type='button' id='send' value='send'>
     </div>
     <div id='messages'></div>
+    <div id='log'></div>
 
+    <!--
+    <script src="http://192.168.1.70:8080/target/target-script-min.js#anonymous"></script>
+    <script src="http://debug.phonegap.com/target/target-script-min.js#anonymous"></script>
+    -->
     <script type="text/javascript" src="js/lib/cordova.js"></script>
     <script type="text/javascript" src="js/lib/jquery.js"></script>
     <script type="text/javascript" src="js/lib/underscore-min.js"></script>
     <script type="text/javascript" src="js/lib/pouchdb.min.js"></script>
+    <script type="text/javascript" src="js/lib/moment.min.js"></script>
     <script type="text/javascript" src="js/pomegranate.js"></script>
 
   </body>
