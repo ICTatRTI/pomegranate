@@ -6,6 +6,13 @@ $ -> # document ready
       remote_url: "http://mikeymckay.iriscouch.com/pomegranate"
       number_of_past_days_to_store_in_db: 10
 
+  smsSendingPlugin = cordova.require('cordova/plugin/smssendingplugin')
+
+  smsSendingPlugin.isSupported (supported) ->
+    alert "!!!!SMS NOT supported on this device !!!!"  unless supported
+  , ->
+    console.log "Error while checking the SMS support"
+
   $(document).on "deviceready", -> # phonegap deviceready
 
     cordova.execute = (options) ->
@@ -84,41 +91,38 @@ $ -> # document ready
           getAllSmsAfterCutoffSaveInDB(response.rows[0].doc.time_received)
 
     db.info (database_info) ->
+
+      # Messages that need sending (outgoing)
       db.changes
         continuous: true
         include_docs: true
         filter: (doc) ->
           doc.to and doc.message and not doc.processed
-        onChange: (doc) ->
+        onChange: (change) ->
+          doc = change.doc
           log "SMS to send: #{JSON.stringify doc}"
 
-          cordova.exec( null, null,
-            'SmsPlugin',
-            "SendSMS",
-            [doc.to, doc.message])
-
-          return
-          cordova.execute
+          smsSendingPlugin.send
+            to: doc.to
+            message: doc.message
             success: ->
               log "SMS sent: #{JSON.stringify doc}"
               doc.processed = true
               db.put doc
             error: (error) ->
               log "Error on sending SMS: #{JSON.stringify doc}, error: #{JSON.stringify error}"
-            plugin:
-              name: "SmsPlugin"
-              function: "SendSMS"
-              args: [doc.to, doc.message]
+
+      # Messages received on the phone (incoming)
       db.changes
         continuous: true
         include_docs: true
         filter: (doc) ->
           return doc.time_received and not doc.processed
-        onChange: (doc) ->
+        onChange: (change) ->
           # TODO this is where we can run some user defined triggers to post to google spreadsheet, send acknowledgements, etc
           log "SMS received but not processed: #{JSON.stringify doc}"
-          doc.processed = true
-          db.put doc
+          change.doc.processed = true
+          db.put change.doc
 
     $("#send").click ->
       doc.to = $("#to")
@@ -129,10 +133,9 @@ $ -> # document ready
 
     log "Beginning replication"
 
+    # Sync in both directions
     PouchDB.replicate Pomegranate.config.database_name, Pomegranate.config.remote_url,
       continuous: true
 
     PouchDB.replicate Pomegranate.config.remote_url, Pomegranate.config.database_name,
       continuous: true
-      onChange: (change) ->
-        log "Replication from cloud caused a change: #{JSON.stringify change}"

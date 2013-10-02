@@ -1,0 +1,44 @@
+body{
+  background-image:url('pomegranate.jpg');
+  background-repeat: no-repeat;
+  background-color: black;
+  color: #FDEEF4;
+  font-family: "Lucida Console", Monaco, monospace;
+}
+textarea, input{
+  background-color: #330014;
+  border: none;
+  color: white;
+  font-size: 2em;
+}
+button{
+  background-color: #FFCC99;
+  font-size: 2em;
+  border: 1px solid orange;
+}
+button:hover{
+  background-color: orange;
+}
+a:visited, a:active{
+  color: #FDEEF4;
+  text-decoration: none;
+}
+a:hover {
+  color: purple;
+  background-color: white;
+}
+#numbers{
+  height: 300px;
+}
+#text{
+  height: 200px;
+}
+#photo-credit{
+  font-size:.75em;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+#chars_left, #number_phone_numbers{
+  font-size: 50%;
+}
