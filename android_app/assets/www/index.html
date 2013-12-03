@@ -5,21 +5,61 @@
     <meta name="format-detection" content="telephone=no" />
     <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
     <title>Pomegranate</title>
+    <script>function isTouchDevice(){if(navigator.userAgent.match(/android 3/i)||navigator.userAgent.match(/honeycomb/i))return false;try{document.createEvent("TouchEvent");return true}catch(e){return false}}function touchScroll(e){if(isTouchDevice()){var t=document.getElementById(e);var n=0;var r=0;document.getElementById(e).addEventListener("touchstart",function(e){n=this.scrollTop+e.touches[0].pageY;r=this.scrollLeft+e.touches[0].pageX},false);document.getElementById(e).addEventListener("touchmove",function(e){if(this.scrollTop<this.scrollHeight-this.offsetHeight&&this.scrollTop+e.touches[0].pageY<n-5||this.scrollTop!=0&&this.scrollTop+e.touches[0].pageY>n+5)e.preventDefault();if(this.scrollLeft<this.scrollWidth-this.offsetWidth&&this.scrollLeft+e.touches[0].pageX<r-5||this.scrollLeft!=0&&this.scrollLeft+e.touches[0].pageX>r+5)e.preventDefault();this.scrollTop=n-e.touches[0].pageY;this.scrollLeft=r-e.touches[0].pageX},false)}}
+    </script>
     <style>
-      body { font-size: 200%; }
+      body { margin: 0; padding: 0;}
+      #content { padding: 1em; }
+      .refresh { font-size: 2em; width:100%; margin:0;}
+      textarea { display:block; width: auto;}
+      #log {
+        font-size: 0.8em;
+        border-top: 1px solid black;
+        border-bottom: 1px solid black;
+        overflow:auto;
+        height: auto;
+        width: auto;
+      }
+      .log-error { font-weight: bold; color: red; }
+      .log-info  { }
+      .log-details { color: grey; font-size: 0.6em; }
+      .cf:before,
+      .cf:after { content: " "; display: table;}
+      .cf:after { clear: both; }
+      table { width: 100%; }
+      td { text-align: center; }
     </style>
+    <!--script src="http://jsconsole.com/remote.js?FC4C7BF3-484F-46AB-B5AF-7A22504CF22D"></script-->
   </head>
   <body>
-    <h1><img style='float:left' src='icon.png'>omegranate</h1>
-    <button style='position:absolute; top:1px; right:1px;font-size:200%' onClick='document.location.reload()'>Refresh</button>
-    <div id='sender'>
+    <button class='refresh' onClick='document.location.reload()'>Refresh</button>
+
+    <h1><img style='display:block; margin: 0 auto 0;' src='icon.png'></h1>
+
+    <!--div id='sender'>
       <input id='to' placeholder='phone number'><br>
       <textarea id='message' rows='5' placeholder='message'></textarea><br>
       <input type='button' id='send' value='send'>
-    </div>
-    <div id='messages'></div>
-    <div id='log'></div>
+    </div-->
+    <div id='content'>
 
+      <div id='log'></div>
+
+      <table id='status'>
+        <tr>
+          <th>Sent</th>
+          <th>Received</th>
+          <th>Database</th>
+          <th>Processing</th>
+        </tr>
+        <tr>
+          <td id='status-sent'></td>
+          <td id='status-received'></td>
+          <td id='status-db'></td>
+          <td id='status-processing'></td>
+        </tr>
+      </table>
+    </div>
     <!--
     <script src="http://192.168.1.70:8080/target/target-script-min.js#anonymous"></script>
     <script src="http://debug.phonegap.com/target/target-script-min.js#anonymous"></script>

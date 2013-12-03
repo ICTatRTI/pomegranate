@@ -2,6 +2,13 @@
   "env" : {
     "default" : {
       "db" : "http://admin:password@localhost:5984/pomegranate"
+    },
+    "haiti" : {
+      "db" : "http://pom:pom@fetserver:5984/pomegranate"
+    },
+    "ghana" : {
+      "db" : "http://pom:pom@fetserver:5984/ghana"
     }
+
   }
 }

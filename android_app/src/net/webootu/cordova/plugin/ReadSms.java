@@ -42,9 +42,9 @@ public class ReadSms extends CordovaPlugin {
         result.put("phone_number", phoneNumber);
 
         if (action.equals("") || action.equals(GET_TEXTS_ACTION)) {
-            return getTexts(args, callbackContext, result, phoneNumber);
+            return getAllTexts(args, callbackContext, result, phoneNumber);
         } else if (action.equals(GET_TEXTS_AFTER)) {
-            return getTextsAfterTimeStamp(callbackContext, phoneNumber, args, result);
+            return getTextsAfter(callbackContext, phoneNumber, args, result);
         } else {
             Log.e(TAG, "Unknown action provided.");
             result.put("error", "Unknown action provided.");
@@ -53,7 +53,7 @@ public class ReadSms extends CordovaPlugin {
         }
     }
 
-    private boolean getTextsAfterTimeStamp( CallbackContext callbackContext,
+    private boolean getTextsAfter( CallbackContext callbackContext,
             String phoneNumber, JSONArray args,    JSONObject result) throws JSONException {
         Log.d(TAG, "Read texts after timestamp.");
 
@@ -79,60 +79,39 @@ public class ReadSms extends CordovaPlugin {
         Log.d(TAG, String.format(
             "Querying for number %s with texts received after %s time stamp.",
             phoneNumber, timeStamp));
-        JSONArray readResults = readTextsAfter(phoneNumber, timeStamp);
+        JSONArray readResults = readTextsAfter( timeStamp );
         Log.d(TAG, "Read results received: " + readResults.toString());
 
-        result.put("texts", readResults);
+        result.put("msgs", readResults);
         callbackContext.success(result);
         return true;
     }
 
-    private boolean getTexts(JSONArray args, CallbackContext callbackContext,
+    private boolean getAllTexts(JSONArray args, CallbackContext callbackContext,
             JSONObject result, String phoneNumber) throws JSONException {
-        Log.d(TAG, "Get texts from specified number.");
-        Integer numberOfTexts = READ_ALL; // Default
-        if (args.length() >= 2) { // We want numberOfTexts to be the second one
-            Log.d(TAG, "Setting maximum number of texts to retrieve.");
-            try {
-                numberOfTexts = Integer.valueOf(args.getString(1));
-            } catch (NumberFormatException nfe) {
-                String errorMessage =  String.format("Input provided (%s) is not a number",
-                        args.getString(1));
-                Log.e(TAG, errorMessage);
-                result.put("error", errorMessage);
-                return false;
-            }
-            if (numberOfTexts <= 0) {
-                numberOfTexts = READ_ALL;
-            }
-        }
 
-        JSONArray readResults = readTextsFrom(phoneNumber, numberOfTexts);
-        Log.d(TAG, "read results: " + readResults.toString());
-        result.put("texts", readResults);
+        JSONArray readResults = readAllTexts();
+        Log.d(TAG, "JOSH read results: " + readResults.toString());
+        result.put("msgs", readResults);
         callbackContext.success(result);
         return true;
     }
 
-    private JSONArray readTextsFrom(String numberToCheck, Integer numberOfTexts
-            ) throws JSONException {
+    private JSONArray readAllTexts() throws JSONException {
         ContentResolver contentResolver = cordova.getActivity().getContentResolver();
-        String[] smsNo = new String[] { numberToCheck };
 
-        String sortOrder = "date DESC"
-                + ((numberOfTexts == READ_ALL) ? "" : " limit " + numberOfTexts);
+        String sortOrder = "date DESC";
 
         Cursor cursor = contentResolver.query(Uri.parse("content://sms/inbox"), null,null,null,null);
-                //"address=?", smsNo, sortOrder);
 
         JSONArray results = new JSONArray();
         while (cursor.moveToNext()) {
             JSONObject current = new JSONObject();
             try {
-                current.put("from", cursor.getString(cursor.getColumnIndex("address")));
+                current.put("from",          cursor.getString(cursor.getColumnIndex("address")));
                 current.put("time_received", cursor.getString(cursor.getColumnIndex("date")));
-                current.put("message", cursor.getString(cursor.getColumnIndex("body")));
-                Log.d(TAG, "time: " + cursor.getString(cursor.getColumnIndex("date"))
+                current.put("message",       cursor.getString(cursor.getColumnIndex("body")));
+                Log.d(TAG, "MSG found: time: " + cursor.getString(cursor.getColumnIndex("date"))
                         + " message: " + cursor.getString(cursor.getColumnIndex("body")));
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -144,15 +123,15 @@ public class ReadSms extends CordovaPlugin {
         return results;
     }
 
-    private JSONArray readTextsAfter(String numberToCheck, String timeStamp
+    private JSONArray readTextsAfter( String timeStamp
             ) throws JSONException {
         ContentResolver contentResolver = cordova.getActivity().getContentResolver();
-        String[] queryData = new String[] { numberToCheck, timeStamp };
+        String[] queryData = new String[] { timeStamp };
 
         String sortOrder = "date DESC";
 
         Cursor cursor = contentResolver.query(Uri.parse("content://sms/inbox"), null,
-            "address=? AND date>=?", queryData, sortOrder);
+            "date>=?", queryData, sortOrder);
 
         JSONArray results = new JSONArray();
         while (cursor.moveToNext()) {
