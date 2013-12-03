@@ -35,8 +35,8 @@ U =
 _db = # gets added to pouchDb object
   replicateBothWays : () ->
     U.log "Connecting to cloud"
-    PouchDB.replicate P.config.database_name, P.config.remote_url, continuous: true
-    PouchDB.replicate P.config.remote_url, P.config.database_name, continuous: true
+    PouchDB.replicate P.config.local_database_name, P.config.remote_url, continuous: true
+    PouchDB.replicate P.config.remote_url, P.config.local_database_name, continuous: true
 
   saveResults : (results) ->
     if results.msgs.length isnt 0
@@ -121,10 +121,9 @@ P.filters =
 #
 
 P.config =
-  "database_name"      : "ghana"
-  "remote_url"         : "http://192.241.251.189:5984/ghana"
-  "sync_previous_days" : 10
-
+  local_database_name : "pomegranate"
+  remote_couch : "http://pomegranate.tangerinecentral.org"
+  sync_previous_days : 10
 
 #
 # Boot, called at deviceready
@@ -141,21 +140,32 @@ P.boot = ->
 
   U.log "Starting DB"
   try
-    P.db = new PouchDB(P.config.database_name, adapter: "websql")
+    P.db = new PouchDB(P.config.local_database_name, adapter: "websql")
     U.log "Using WebSQL adapter"
   catch e
-    U.error "WebSQL database failed", e 
+    U.error "WebSQL database failed", e
 
     try
-      P.db = new PouchDB(P.config.database_name, adapter: "idb")
+      P.db = new PouchDB(P.config.local_database_name, adapter: "idb")
       U.log "Using IDB adapter"
     catch e
-      U.error "IDB database failed", e 
+      U.error "IDB database failed", e
 
       try
-        P.db = new PouchDB(P.config.database_name, adapter: "leveldb")
+        P.db = new PouchDB(P.config.local_database_name, adapter: "leveldb")
       catch e
-        U.error "LevelDB database failed", e 
+        U.error "LevelDB database failed", e
+
+  P.db.get 'config',
+    (error,doc) ->
+      if error
+        projectName = prompt("Enter the project name at #{remote_couch}")
+        P.config =
+          _id : "config"
+          remote_url : "#{P.config.remote_couch}/#{projectName}"
+        P.db.put P.config
+      else
+        P.config = doc
 
   $.extend(P.db, _db)
 
