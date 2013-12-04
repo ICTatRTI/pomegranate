@@ -2,7 +2,7 @@
 
   return unless doc.collection is "person"
 
-  phone = doc.phone.replace(/[^0-9]/g, '')
+  phone = (doc.phone || '').replace(/[^0-9]/g, '')
 
   emit doc.groupId,
     phone       : phone
