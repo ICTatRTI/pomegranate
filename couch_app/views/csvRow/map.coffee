@@ -1,10 +1,22 @@
 (doc) ->
+
   return if not doc.message?
-  result = {
-    "to"       : doc.to            || ""
-    "from"     : doc.from          || ""
-    "received" : doc.time_received || ""
-    "sent"     : doc.time_sent     || ""
-    "message"  : doc.message
-  }
-  emit doc._id, result
+
+  phoneFrom = (doc.from ||'').replace(/[^0-9]/g, '')
+  phoneTo   = (doc.to   ||'').replace(/[^0-9]/g, '')
+
+  emit doc._id,
+    "uid" : doc._id
+
+    "to"   : phoneTo   || "pom phone"
+    "from" : phoneFrom || "pom phone"
+
+    "timeReceived" : doc.time_received || ""
+    "timeSent"     : doc.time_sent     || ""
+
+    "sentMessage"     : typeof doc.to is "string"
+    "receivedMessage" : typeof doc.from is "string"
+
+    "message" : doc.message
+
+
