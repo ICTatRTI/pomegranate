@@ -1,13 +1,34 @@
-
-
 class Router extends Backbone.Router
   routes:
-    "login" : "login"
-    "send"  : "send"
-    ""      : "send"
+    ":project/send"  : "send"
+    ":project/received"  : "received"
+    ":project/sent"  : "sent"
+    ":project"      : "menu"
+    ":project/configure"      : "configure"
+    ""      : "selectProject"
 
-  send: ->
-    sendView = new SendView()
+  configure: (project) ->
+    configureView = new ConfigureView
+    configureView.project = project
+    configureView.render()
+
+  selectProject: ->
+    $("#content").html "
+      Enter your project name:
+      <input onChange='document.location=\"#\"+$(event.target).val()\' type='text'></input>
+    "
+
+  menu: (project) ->
+    $("#content").html "
+      #{
+        for option in "send,receieved,sent".split(/,/)
+          "<a href='##{project}/#{option}'>#{option}</a>"
+      }
+    "
+
+  send: (project) ->
+    sendView = new SendView
+    sendView.project = project
     sendView.render()
 
     groupManager = new GroupManager
@@ -80,7 +101,7 @@ class GroupManager extends Backbone.View
     person = @allPeople.get(personId)
     person.save
       name        : $person.find(".person-name").val()
-      phone       : $person.find(".person-phone").val()
+
       district    : $person.find(".person-district").val()
       designation : $person.find(".person-designation").val()
       tags        : $person.find(".person-tags").val()
@@ -267,6 +288,34 @@ class Message extends Backbone.Model
   url: "message"
 
 
+class ConfigureView extends Backbone.View
+
+  el: "#content"
+
+  events:
+    "click #save_google_form_url" : "save"
+
+  save: ->
+    $.couch.db(@project).saveDoc {
+      _id: "google_form"
+      live_form_url: $("#google_form_url").val()
+    }
+
+  render: ->
+    $("#content").html "
+      URL for #{@project} live google form:
+
+      <ol>
+        <li>Make your own copy of the <a href='https://docs.google.com/forms/d/12qRAtzhSkRNv6SzSgPPzTmGQm39yzUK5TP-AKcfWvNo/edit?usp=sharing'> Sample SMS Data Form</a>. (Click on 'file', 'make a copy').
+        </li>
+        <li> Click View live form, once the page opens copy the URL
+        </li>
+        <li> Paste the URL here, <input id='google_form_url'> and click: <button id='save_google_form_url'>Save google form url</button>
+        </li>
+      </ol>
+    "
+
+
 class SendView extends Backbone.View
 
   el: "#send"
@@ -283,6 +332,7 @@ class SendView extends Backbone.View
   clearNumbers : -> @$el.find("#numbers").val(''); @countNumbers()
 
   render: ->
+    console.log @project
     @$el.html "
     <div>
 
@@ -315,7 +365,7 @@ class SendView extends Backbone.View
     $("#log").append "Adding #{numbers.length} message(s) to the outgoing message queue<br>"
 
     for number in numbers
-      $.couch.db("pomegranate").saveDoc {
+      $.couch.db(@project).saveDoc {
         message: $("#text").val()
         to: number
       }

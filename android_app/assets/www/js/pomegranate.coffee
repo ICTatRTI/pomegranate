@@ -34,9 +34,23 @@ U =
 
 _db = # gets added to pouchDb object
   replicateBothWays : () ->
-    U.log "Connecting to cloud"
-    PouchDB.replicate P.config.local_database_name, P.config.remote_url, continuous: true
-    PouchDB.replicate P.config.remote_url, P.config.local_database_name, continuous: true
+
+    if P.config.local_database_name and P.config.remote_url
+
+      U.log "Replicating from #{P.config.local_database_name} to #{P.config.remote_url} and vice versa"
+      replications =
+        to: PouchDB.replicate P.config.local_database_name, P.config.remote_url,
+          continuous: true
+          complete: (response) ->
+            U.log JSON.stringify response
+        from: PouchDB.replicate P.config.remote_url, P.config.local_database_name,
+          continuous: true
+          complete: (response) ->
+            U.log JSON.stringify response
+      U.log JSON.stringify replications
+    else
+      U.log "Waiting for configuration to load or be entered, waiting 5 seconds"
+      _.delay replicateBothWays, 5000
 
   saveResults : (results) ->
     if results.msgs.length isnt 0
@@ -103,7 +117,7 @@ P.views =
 # Filters
 #
 
-P.filters = 
+P.filters =
 
   messageNeedsToGo: (doc) ->
     needsToGo = doc.to and not doc.processed
@@ -154,28 +168,33 @@ P.boot = ->
       try
         P.db = new PouchDB(P.config.local_database_name, adapter: "leveldb")
       catch e
+   
         U.error "LevelDB database failed", e
-
-  P.db.get 'config',
-    (error,doc) ->
-      if error
-        projectName = prompt("Enter the project name at #{remote_couch}")
-        P.config =
-          _id : "config"
-          remote_url : "#{P.config.remote_couch}/#{projectName}"
-        P.db.put P.config
-      else
-        P.config = doc
-
   $.extend(P.db, _db)
 
-  $ ->
-    resize = -> $("#log").height( ($(window).height()-($("#log").position().top+($(window).height()*0.2))) + "px" )
-    touchScroll('log')
-    $(window).on "resize", resize
-    resize()
-    U.log "Starting application"
-    P.startApp()
+  console.log "Trying to load config from database"
+  P.db.get 'config',
+    (error,doc) ->
+      U.log JSON.stringify doc
+      U.log doc?
+      if doc?
+        console.log "Found a config: #{JSON.stringify doc}"
+        P.config = doc
+      else
+        bootbox.prompt "Enter the project name at #{P.config.remote_couch}", (projectName) ->
+          P.config = _.extend P.config,
+            _id : "config"
+            remote_url : "#{P.config.remote_couch}/#{projectName}"
+          P.db.put P.config, ->
+            location.reload()
+
+      $ ->
+        resize = -> $("#log").height( ($(window).height()-($("#log").position().top+($(window).height()*0.2))) + "px" )
+        touchScroll('log')
+        $(window).on "resize", resize
+        resize()
+        U.log "Starting application"
+        P.startApp()
 
 
 #
@@ -268,6 +287,7 @@ P.startApp = ->
       U.log "Message processed", JSON.stringify change.doc
       change.doc.processed = true
       P.db.put change.doc
+
 
 
   P.db.replicateBothWays() # ...
