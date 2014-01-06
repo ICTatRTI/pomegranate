@@ -5,7 +5,7 @@ body
   background-image:url('pomegranate.jpg');
   background-repeat: no-repeat;
   background-color: black;
-  color: #FDEEF4;
+  color: #FFE5CC;
   font-family: "Lucida Console", Monaco, monospace;
 }
 
@@ -15,25 +15,35 @@ h2
 }
 
 textarea, input{
-  background-color: #aaa;
-  border: none;
-  color: black;
-  font-size: 1em;
+  background-color: rgba(255,255,255,0.1);
+  border: solid, 1,#6B0039;
+  color: #FFE5CC;
+  font-size: 1.5em;
 }
-button{
-  cursor: pointer;
-  background-color: #FFCC99;
-  box-shadow: inset 0px -2px 1px 0px rgba(0,0,0,0.4);
-  font-size: 1em;
-  border: 0;
-  margin: 0;
-  padding: 0.5em;
-}
-button:hover{
+a, button{
+  color: #6B0039;
+  background-color: rgba(255,239,204,0.9);
+  margin-right:5px;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  font-size: 150%;
+  font-weight: bold;
+  text-decoration: none;
+  border:none;
   box-shadow: none;
-  line-height: 1.3em;
-  padding-bottom: 0.45em;
 }
+
+a:visited, a:active{
+  color: #6B0039;
+  text-decoration: none;
+}
+
+a:hover, button:hover{
+  box-shadow: none;
+  color: #FFE5CC;
+  background-color: rgba(107,0,57,0.5);
+}
+
 button:active
 {
   box-shadow: inset 0px 2px 1px 0px rgba(0,0,0,0.4);
@@ -60,14 +70,14 @@ li
 }
 
 
-a:visited, a:active{
-  color: #FDEEF4;
-  text-decoration: none;
+
+
+
+a[role=button].paginate_disabled_previous, a[role=button].paginate_disabled_next{
+  color:gray;
 }
-a:hover {
-  color: purple;
-  background-color: white;
-}
+
+
 #text,
 #numbers{
   height: 200px;
@@ -75,9 +85,11 @@ a:hover {
 }
 #photo-credit{
   font-size:.75em;
-  position: absolute;
-  top: 5px;
+  position: fixed;
+  bottom: 5px;
   right: 5px;
+  color:gray;
+  z-index: -10;
 }
 #chars_left, #number_phone_numbers{
   font-size: 50%;
@@ -114,3 +126,23 @@ a:hover {
   font-weight: normal;
   color: #aaa;
 }
+
+thead td, tfoot td{
+  background-color: rgba(107,0,57,0.5);
+}
+
+
+#menu{
+  position: fixed;
+  top: 10px;
+  right: 10px;
+}
+
+table.dataTable tr.even{
+  background-color: rgba(0,0,0,0.1);
+}
+
+table.dataTable tr.odd{
+  background-color: rgba(255,255,255,0.1);
+}
+

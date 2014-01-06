@@ -8,25 +8,30 @@ class Router extends Backbone.Router
     ""      : "selectProject"
 
   configure: (project) ->
+    @menu(project)
     configureView = new ConfigureView
     configureView.project = project
     configureView.render()
 
   selectProject: ->
+    $("#menu").html ""
     $("#content").html "
       Enter your project name:
       <input onChange='document.location=\"#\"+$(event.target).val()\' type='text'></input>
     "
-
   menu: (project) ->
-    $("#content").html "
+    $("#content").html ""
+    $("#menu").html "
       #{
-        for option in "send,receieved,sent".split(/,/)
-          "<a href='##{project}/#{option}'>#{option}</a>"
+        (for option in "send,sent,received,configure".split(/,/)
+          "<a role='button' href='##{project}/#{option}'>#{option}</a>"
+        ).join("")
       }
+      <a role='button' href='#'>select project</a>
     "
 
   send: (project) ->
+    @menu(project)
     sendView = new SendView
     sendView.project = project
     sendView.render()
@@ -34,8 +39,19 @@ class Router extends Backbone.Router
     groupManager = new GroupManager
     groupManager.render()
 
-  default: ->
-    landingView = new LandingView()
+  received: (project) ->
+    @menu(project)
+    receivedView = new ReceivedView
+    receivedView.project = project
+    receivedView.render()
+
+  sent: (project) ->
+    @menu(project)
+    sentView = new SentView
+    sentView.project = project
+    sentView.render()
+
+
 
 class Person extends Backbone.Model
   url: "person"
@@ -315,10 +331,128 @@ class ConfigureView extends Backbone.View
       </ol>
     "
 
+class SentView extends Backbone.View
+
+  el: "#content"
+
+  events:
+    "click .send"    : "send"
+
+  render: ->
+    # Rerender if something changes
+    $.couch.db(@project).changes().onChange =>
+      @render()
+
+    columns = "Time, To, Message".split(/,/)
+
+    $("#content").html "
+      <h2>Sent Messages</h2>
+      <table id='sentMessages'>
+        <thead>
+          <tr>
+            #{
+              (for header in columns
+                "<td>#{header}</td>"
+              ).join("")
+            }
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+        <tfoot>
+          <tr>
+            #{
+              (for header in columns
+                "<td>#{header}</td>"
+              ).join("")
+            }
+          </tr>
+        </tfoot>
+      </table>
+    "
+    $.couch.db(@project).allDocs
+      include_docs: true
+      error: (error) -> console.log JSON.stringify(error)
+      success: (results) ->
+        for result in results.rows
+          if result.doc.to?
+            $("table#sentMessages tbody").append "
+              <tr>
+                <td>#{
+                  if result.doc.time_sent
+                    moment(parseInt result.doc.time_sent).format("YYYY-MM-DD HH:mm")
+                  else
+                    "Pending"
+                }</td>
+                <td>#{result.doc.to}</td>
+                <td>#{result.doc.message}</td>
+              </tr>
+
+            "
+        $("table#sentMessages").dataTable
+          aaSorting: [[0,"desc"]]
+
+class ReceivedView extends Backbone.View
+
+  el: "#content"
+
+  events:
+    "click .send"    : "send"
+
+  render: =>
+    # Rerender if something changes
+    $.couch.db(@project).changes().onChange =>
+      @render()
+
+    columns = "Time, From, Message".split(/,/)
+
+    $("#content").html "
+      <h2>Received Messages</h2>
+      <table id='receivedMessages'>
+        <thead>
+          <tr>
+            #{
+              (for header in columns
+                "<td>#{header}</td>"
+              ).join("")
+            }
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+        <tfoot>
+          <tr>
+            #{
+              (for header in columns
+                "<td>#{header}</td>"
+              ).join("")
+            }
+          </tr>
+        </tfoot>
+      </table>
+    "
+    $.couch.db(@project).allDocs
+      include_docs: true
+      error: (error) -> console.log JSON.stringify(error)
+      success: (results) =>
+        @currentNumberOfResults = results.total_rows
+        for result in results.rows
+          if result.doc.time_received?
+            $("table#receivedMessages tbody").append "
+              <tr>
+                <td>#{moment(parseInt result.doc.time_received).format("YYYY-MM-DD HH:mm")}</td>
+                <td>#{result.doc.from}</td>
+                <td>#{result.doc.message}</td>
+              </tr>
+
+            "
+        $("table#receivedMessages").dataTable
+          aaSorting: [[0,"desc"]]
+
 
 class SendView extends Backbone.View
 
-  el: "#send"
+  el: "#content"
 
   events:
     "click .send"    : "send"
