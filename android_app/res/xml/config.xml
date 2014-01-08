@@ -75,5 +75,6 @@
     <plugins>
        <plugin name="SmsSendingPlugin" value="org.apache.cordova.plugin.SmsSendingPlugin" />
        <plugin name="ReadSms" value="net.webootu.cordova.plugin.ReadSms" />
+       <plugin name="BackgroundServicePlugin" value="com.red_folder.phonegap.plugin.backgroundservice.BackgroundServicePlugin"/>
     </plugins>
 </widget>

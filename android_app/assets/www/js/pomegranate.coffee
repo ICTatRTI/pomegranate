@@ -145,6 +145,17 @@ P.config =
 
 P.boot = ->
 
+  # Run in background
+  console.log "Starting service"
+
+  cordova.define 'cordova/plugin/myService', (require,exports,module) ->
+    CreateBackgroundService('org.rti.pomegranate.MyService', require, exports, module)
+
+  (cordova.require('cordova/plugin/myService')).startService(	(r) -> console.log "Started #{JSON.stringify r}", (r) -> console.log "Failed to start #{JSON.stringify r}")
+  console.log "Service started"
+
+
+
   P.sender = cordova.require('cordova/plugin/smssendingplugin')
 
   P.sender.isSupported (supported) ->
@@ -175,8 +186,6 @@ P.boot = ->
   console.log "Trying to load config from database"
   P.db.get 'config',
     (error,doc) ->
-      U.log JSON.stringify doc
-      U.log doc?
       if doc?
         console.log "Found a config: #{JSON.stringify doc}"
         P.config = doc

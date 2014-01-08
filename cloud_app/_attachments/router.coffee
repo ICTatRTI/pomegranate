@@ -1,57 +1,50 @@
 class Router extends Backbone.Router
+
+  initialize: ->
+    @menuItems = "send,sent,received,configure,selectProject".split(/,/)
+    @sendView = new SendView
+    @receivedView = new ReceivedView
+    @sentView = new SentView
+    @configureView = new ConfigureView
+    @selectProjectView = new SelectProjectView
+
   routes:
-    ":project/send"  : "send"
-    ":project/received"  : "received"
-    ":project/sent"  : "sent"
-    ":project"      : "menu"
-    ":project/configure"      : "configure"
-    ""      : "selectProject"
+    ":project/:action" : "action"
+    ":project" : "action"
+    ""      : "action"
 
-  configure: (project) ->
-    @menu(project)
-    configureView = new ConfigureView
-    configureView.project = project
-    configureView.render()
+  updateProject: (project) ->
+    if @project?
+      $.couch.db(@project).changes().stop()
 
-  selectProject: ->
-    $("#menu").html ""
-    $("#content").html "
-      Enter your project name:
-      <input onChange='document.location=\"#\"+$(event.target).val()\' type='text'></input>
-    "
-  menu: (project) ->
-    $("#content").html ""
+    @project = project
+
+    $.couch.db(@project).changes().onChange =>
+      @sendView.render()
+      @receivedView.render()
+
     $("#menu").html "
       #{
-        (for option in "send,sent,received,configure".split(/,/)
-          "<a role='button' href='##{project}/#{option}'>#{option}</a>"
+        (for item in @menuItems
+          "<a role='button' href='##{@project}/#{item}'>#{item}</a>"
         ).join("")
       }
-      <a role='button' href='#'>select project</a>
     "
 
-  send: (project) ->
-    @menu(project)
-    sendView = new SendView
-    sendView.project = project
-    sendView.render()
+    @navigate "#{@project}", true
 
-    groupManager = new GroupManager
-    groupManager.render()
-
-  received: (project) ->
-    @menu(project)
-    receivedView = new ReceivedView
-    receivedView.project = project
-    receivedView.render()
-
-  sent: (project) ->
-    @menu(project)
-    sentView = new SentView
-    sentView.project = project
-    sentView.render()
-
-
+  action: (project,action) ->
+    console.log project
+    console.log action
+    if project? and not @project?
+      @updateProject(project)
+    action = 'selectProject' unless project
+    action = 'send' unless action
+    console.log action
+    this["#{action}View"].project = project
+    this["#{action}View"].render()
+    $("##{item}").hide() for item in @menuItems
+    $("##{action}").show()
 
 class Person extends Backbone.Model
   url: "person"
@@ -304,9 +297,25 @@ class Message extends Backbone.Model
   url: "message"
 
 
+class SelectProjectView extends Backbone.View
+
+  el: "#selectProject"
+
+  events:
+    "change input#projectName" : "updateProject"
+
+  updateProject: ->
+    Pomegranate.router.updateProject($("#projectName").val())
+
+  render: ->
+    @$el.html "
+      Enter your project name:
+      <input id='projectName' type='text'></input>
+    "
+
 class ConfigureView extends Backbone.View
 
-  el: "#content"
+  el: "#configure"
 
   events:
     "click #save_google_form_url" : "save"
@@ -318,7 +327,7 @@ class ConfigureView extends Backbone.View
     }
 
   render: ->
-    $("#content").html "
+    @$el.html "
       URL for #{@project} live google form:
 
       <ol>
@@ -333,19 +342,15 @@ class ConfigureView extends Backbone.View
 
 class SentView extends Backbone.View
 
-  el: "#content"
+  el: "#sent"
 
   events:
     "click .send"    : "send"
 
   render: ->
-    # Rerender if something changes
-    $.couch.db(@project).changes().onChange =>
-      @render()
-
     columns = "Time, To, Message".split(/,/)
 
-    $("#content").html "
+    @$el.html "
       <h2>Sent Messages</h2>
       <table id='sentMessages'>
         <thead>
@@ -394,19 +399,16 @@ class SentView extends Backbone.View
 
 class ReceivedView extends Backbone.View
 
-  el: "#content"
+  el: "#received"
 
   events:
     "click .send"    : "send"
 
   render: =>
-    # Rerender if something changes
-    $.couch.db(@project).changes().onChange =>
-      @render()
 
     columns = "Time, From, Message".split(/,/)
 
-    $("#content").html "
+    @$el.html "
       <h2>Received Messages</h2>
       <table id='receivedMessages'>
         <thead>
@@ -452,7 +454,7 @@ class ReceivedView extends Backbone.View
 
 class SendView extends Backbone.View
 
-  el: "#content"
+  el: "#send"
 
   events:
     "click .send"    : "send"
@@ -466,7 +468,6 @@ class SendView extends Backbone.View
   clearNumbers : -> @$el.find("#numbers").val(''); @countNumbers()
 
   render: ->
-    console.log @project
     @$el.html "
     <div>
 
@@ -503,6 +504,8 @@ class SendView extends Backbone.View
         message: $("#text").val()
         to: number
       }
+    
+    Pomegranate.router.navigate "#{@project}/sent", true
 
   countNumbers: ->
     value = $("#numbers").val()
